@@ -2,3 +2,5 @@ pydantic-ai
 fastapi
 pydantic-yaml
 python-dotenv
+loguru
+pymongo

@@ -7,9 +7,9 @@
 [x] implement different configuration per endpoint
 [x] implement yaml comfiguration loading
 [x] generate a streaming response and json response like https://openrouter.ai/request-builder
+[x] implement API key obfuscation
 
 
 [ ] handle session management (more 1 user response is a session)
 [ ] implement trace logging
-[ ] implement API key obfuscation
 [ ] write tests

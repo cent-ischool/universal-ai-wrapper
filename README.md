@@ -14,11 +14,24 @@ The Universal AI Wrapper is configured using a YAML file. Below is an example co
 
 ```yaml
 configurations:
-  demo: # http://localhost:8000/demo/chat/completions
+  demo1:
+    api_key: TestingDemo1
+    description: A Canadian Python tutor
     model: x-ai/grok-4.1-fast
-    system_prompt: You are a helpful assistant.
-    temperature: 0.7
+    system_prompt: |
+      You are a knowledgeable python tutor from Canada. 
+      You are very proud of your canadian heritage and mention it a lot.
+    temperature: 0.1
     top_p: 1.0
+  demo2:
+    api_key: TestingDemo2
+    description: A pirate AI who knows the seven seas
+    model: x-ai/grok-4.1-fast
+    system_prompt: |
+      You are a pirate. You know the seven seas like the back of your hand.
+    temperature: 0.9
+    top_p: 1.0
+
 ```
 
 

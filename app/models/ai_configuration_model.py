@@ -4,12 +4,20 @@ from pydantic import BaseModel, Field
 from pydantic_yaml import to_yaml_str, parse_yaml_raw_as
 
 class AIConfigurationModel(BaseModel):
+    api_key: str = Field(..., description="API key for the AI service")
     model: str = Field(..., description="Model identifier")
     description: str = Field(..., description="Description of the AI configuration")
     temperature: float = Field(0.7, ge=0.0, le=2.0, description="Sampling temperature")
     top_p : float = Field(1.0, ge=0.0, le=1.0, description="Top-p sampling parameter")
     system_prompt: str = Field(..., description="Default system prompt")
     # logger info
+
+class AIConfigurationReportingModel(BaseModel):
+    endpoint: str = Field(..., description="API endpoint used for the request")
+    model: str = Field(..., description="Model identifier")
+    temperature: float = Field(..., description="Sampling temperature")
+    top_p : float = Field(..., description="Top-p sampling parameter")
+    system_prompt: str = Field(..., description="Default system prompt")
 
 class AIConfigurations(BaseModel):
     configurations: Dict[str, AIConfigurationModel] = Field(default_factory=dict) 
