@@ -8,6 +8,10 @@ import uuid
 from fastapi.responses import StreamingResponse
 from pydantic_yaml import parse_yaml_raw_as
 from pathlib import Path
+from dotenv import load_dotenv
+
+if not load_dotenv(".env"):
+    raise FileNotFoundError("Could not find .env file at .env")
 
 app = FastAPI(title="Universal AI Wrapper API - Requests Implementation")
 
