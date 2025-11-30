@@ -1,4 +1,5 @@
 import sys
+import os
 import asyncio
 from loggers.loggerfactory import LoggerFactory
 from models.logging_model import LoggingModel, AIUsage
@@ -12,7 +13,7 @@ async def main():
     load_dotenv()
     params = { "filespec": "foofilelog.json" }
     mongo_params = {
-        "connection_string": "mongodb+srv://centadmin:2VnvllcncR0A1PTA@cent-iot.bizlf.mongodb.net/?retryWrites=true&w=majority",
+        "connection_string": os.environ.get("MONGO_CONNECTION_STRING"),
         "database": "testing",
         "collection": "logs"
     }
