@@ -13,21 +13,12 @@ The Universal AI Wrapper is a web API that provides a unified interface to inter
 The Universal AI Wrapper is configured using a YAML file. Below is an example configuration:
 
 ```yaml
-
-demo:
-  system_prompt: "You are a helpful assistant."
-  endpoint: demo
-  temperature: 0.7
-  model: gpt-4o-mini
-  
-
-  endpoint: demo
-  api_key: 
-  provider: openai
-    model: gpt-4o-mini
-  logger:
-    type: file
-
+configurations:
+  demo: # http://localhost:8000/demo/chat/completions
+    model: x-ai/grok-4.1-fast
+    system_prompt: You are a helpful assistant.
+    temperature: 0.7
+    top_p: 1.0
 ```
 
 
