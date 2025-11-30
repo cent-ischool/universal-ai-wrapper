@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  app:
+    image: apphammer/claudecode:n22p313
+    volumes:
+      - ..:/workspaces/universal-ai-wrapper:cached
+      - universal-ai-wrapper-node_modules:/workspaces/universal-ai-wrapper/node_modules
+      - universal-ai-wrapper-node_modules_shared:/workspaces/universal-ai-wrapper/shared/node_modules
+      - universal-ai-wrapper-node_modules_clientapp:/workspaces/universal-ai-wrapper/talas-clientapp/node_modules
+      - universal-ai-wrapper-node_modules_admin:/workspaces/universal-ai-wrapper/talas-admin/node_modules
+      - universal-ai-wrapper-node_modules_preview:/workspaces/universal-ai-wrapper/talas-preview/node_modules
+
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - BRAVE_API_KEY=${BRAVE_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+
+    command: sleep infinity
+
+    user: apphammer
+    
+  jupyter:
+   image: mafudge/jhub-minimal-notebook:20251125-509
+   environment:
+     JUPYTER_ENABLE_LAB: "yes"
+     GRANT_SUDO: "yes"
+     JUPYTER_TOKEN: "testing"
+   ports:
+     - "8888:8888"
+   volumes:
+     - ..:/workspaces/universal-ai-wrapper:cached
+
+volumes:
+  universal-ai-wrapper-node_modules:
+  universal-ai-wrapper-node_modules_shared:
+  universal-ai-wrapper-node_modules_clientapp:
+  universal-ai-wrapper-node_modules_admin:
+  universal-ai-wrapper-node_modules_preview:
+
+
+networks:
+  default:
+    name: universal-ai-wrapper_default
+    driver: bridge
