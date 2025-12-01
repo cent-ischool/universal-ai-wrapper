@@ -2,8 +2,8 @@ from enum import Enum
 from typing import List, Dict 
 from pydantic import BaseModel, Field
 import uuid 
-from models.chat_request_model import Role, Message
-from models.ai_configuration_model import AIConfigurationReportingModel
+from app.models.chat_request_model import Role, Message
+from app.models.ai_configuration_model import AIConfigurationReportingModel
 
 
 class AIUsage(BaseModel):
@@ -24,6 +24,6 @@ class LoggingModel(BaseModel):
     message: str = Field(..., description="Message content sent to the AI service")
 
     # composite fields
-    usage: AIUsage = Field(..., description="Usage statistics for the AI service")
-    ai_configuration: AIConfigurationReportingModel = Field(..., description="AI configuration settings")
-    input_messages: List[Message] = Field(..., description="List of input messages sent to the AI service")
+    # usage: AIUsage = Field(..., description="Usage statistics for the AI service")
+    # ai_configuration: AIConfigurationReportingModel = Field(..., description="AI configuration settings")
+    # input_messages: List[Message] = Field(..., description="List of input messages sent to the AI service")

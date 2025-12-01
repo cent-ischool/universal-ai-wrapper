@@ -1,5 +1,5 @@
 
-from .loggerbase import LoggerBase
+from app.loggers.loggerbase import LoggerBase
 
 class LoggerFactory:
 
@@ -18,8 +18,12 @@ class LoggerFactory:
             return LineOrientedJsonFileLogger(params)
         
         if logger_type == "mongodb":
-            from .mongodblogger import MongoDbLogger
+            from .mongologger import MongoDbLogger
             return MongoDbLogger(params)
+        
+        if logger_type == "path":
+            from .pathlogger import PathJsonFileLogger
+            return PathJsonFileLogger(params)
 
         raise ValueError(f"Unknown logger type: {logger_type}")
     

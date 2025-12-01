@@ -12,12 +12,13 @@ async def main():
     import datetime
     load_dotenv()
     params = { "filespec": "foofilelog.json" }
+    path_params = { "path": "logs" }
     mongo_params = {
         "connection_string": os.environ.get("MONGO_CONNECTION_STRING"),
         "database": "testing",
         "collection": "logs"
     }
-    logger = LoggerFactory.create("mongodb", mongo_params)
+    logger = LoggerFactory.create("path", path_params)
     print(f"Created logger of type: {logger.provider()}")
 
     # Create a sample LoggingModel instance

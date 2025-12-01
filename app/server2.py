@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.models.chat_request_model import ChatRequest
 from app.models.chat_response_model import WrapperResponse
-from app.models.ai_configuration_model import AIConfigurations
+from app.models.ai_configuration_model import AIConfigurationModel, AIConfigurations
 from app.wrappers.requests_wrapper import RequestsWrapper
 import time
 import uuid
@@ -45,8 +45,11 @@ def create_auth_dependency(expected_api_key: str):
 
 
 # Create dynamic routes for each configuration
-def create_chat_endpoint(config_name: str, config):
+def create_chat_endpoint(config_name: str, config : AIConfigurationModel):
     """Factory function to create a chat endpoint for a specific configuration."""
+
+    # Endpoint is config_name 
+    config.endpoint = config_name
 
     # Create authentication dependency for this endpoint
     auth_dependency = create_auth_dependency(config.api_key)
@@ -72,11 +75,7 @@ def create_chat_endpoint(config_name: str, config):
         messages = [{"role": msg.role.value, "content": msg.content} for msg in request.messages]
 
         # Use the requests wrapper with configuration settings
-        provider = RequestsWrapper(
-            model=config.model,
-            temperature=config.temperature,
-            base_url=base_url,
-            system_prompt=config.system_prompt)
+        provider = RequestsWrapper(config, base_url=base_url)
 
         if stream:
             async def stream_generator():
@@ -103,47 +102,6 @@ for config_name, config in configurations.configurations.items():
         name=f"{config_name}_chat_completions",
         tags=["endpoints"]
     )(endpoint)
-
-
-# @app.post("/chat/completions")
-# async def chat_completions(request: ChatRequest):
-#     """
-#     Handle chat requests and return a text response using RequestsWrapper.
-
-#     Args:
-#         request: ChatRequest containing model, messages, and other parameters
-
-#     Returns:
-#         Text response or streaming response
-#     """
-
-#     # Eventually read this from config
-#     base_url: str = 'https://openrouter.ai/api/v1'
-#     model: str = 'x-ai/grok-4.1-fast'
-#     temperature: float = 0.7
-#     top_p: float = 1.0
-#     system_prompt: str = "You are a helpful Canadian assistant. You say 'eh' a lot."
-#     stream = request.stream if request.stream is not None else False
-
-#     # Convert Pydantic Message objects to dictionaries
-#     messages = [{"role": msg.role.value, "content": msg.content} for msg in request.messages]
-
-#     # Use the requests wrapper to process the request
-#     provider = RequestsWrapper(
-#         model=model,
-#         temperature=temperature,
-#         base_url=base_url,
-#         system_prompt=system_prompt)
-
-#     if stream:
-#         async def stream_generator():
-#             async for chunk in provider.generate_stream(messages=messages):
-#                 yield chunk.encode("utf-8") if isinstance(chunk, str) else chunk
-
-#         return StreamingResponse(stream_generator(), media_type="text/event-stream")
-#     else:
-#         response_text = await provider.generate_text(messages=messages)
-#         return response_text
 
 
 @app.get("/", tags=["system"])

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict, AsyncIterator
-from models.logging_model import LoggingModel
+from app.models.logging_model import LoggingModel
 
 class LoggerBase(ABC):
 

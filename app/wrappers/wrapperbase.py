@@ -12,20 +12,9 @@ class WrapperBase(ABC):
         pass
 
     @abstractmethod
-    def model(self):
+    def config(self):
         pass
 
-    @abstractmethod
-    def temperature(self):
-        pass
-
-    @abstractmethod
-    def base_url(self):
-        pass
-
-    @abstractmethod
-    def system_prompt(self, messages: List[Dict]) -> str:
-        pass
 
 if __name__=='__main__':
     pass

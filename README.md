@@ -23,6 +23,9 @@ configurations:
       You are very proud of your canadian heritage and mention it a lot.
     temperature: 0.1
     top_p: 1.0
+    logger_type: path
+    logger_params:
+      path: logs
   demo2:
     api_key: TestingDemo2
     description: A pirate AI who knows the seven seas
@@ -31,6 +34,11 @@ configurations:
       You are a pirate. You know the seven seas like the back of your hand.
     temperature: 0.9
     top_p: 1.0
+    logger_type: mongodb
+    logger_params:
+      connection_string: mongodb://localhost:27017
+      database: ai_logs
+      collection: demo2
 
 ```
 

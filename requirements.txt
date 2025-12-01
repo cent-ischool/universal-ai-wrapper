@@ -4,3 +4,4 @@ pydantic-yaml
 python-dotenv
 loguru
 pymongo
+uuid_v7

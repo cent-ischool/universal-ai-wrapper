@@ -5,13 +5,38 @@ import requests
 import sys
 import json
 from pathlib import Path
+import uuid
+import datetime
 
-# Add parent directory to path for standalone execution
-if __name__ == '__main__':
-    sys.path.insert(0, str(Path(__file__).parent.parent))
-    from wrappers.wrapperbase import WrapperBase
-else:
-    from .wrapperbase import WrapperBase
+from app.loggers.loggerfactory import LoggerFactory
+from app.models.logging_model import LoggingModel
+from app.models.ai_configuration_model import AIConfigurationModel
+from app.wrappers.wrapperbase import WrapperBase
+
+def unix_to_iso8601(timestamp):
+  """Converts a Unix timestamp to an ISO 8601 formatted string."""
+  # Convert the Unix timestamp to a datetime object in UTC
+  dt_object = datetime.datetime.fromtimestamp(timestamp, tz=datetime.timezone.utc)
+  # Format the datetime object to ISO 8601 string
+  iso_string = dt_object.isoformat()
+  return iso_string
+
+def build_log_entry(result: Dict, config: AIConfigurationModel, messages: List[Dict]) -> LoggingModel:
+    log_entry = LoggingModel(
+        request_id= uuid.uuid4(),
+        provider=result.get("provider", "unknown"),
+        model=config.model,
+        endpoint=config.endpoint,
+        session_id= uuid.uuid4(), # TODO: fix this needs to be a lookup based on first prompt?
+        user_id="TBD", # TODO: fix this needs to be passed in from caller
+        timestamp=unix_to_iso8601(result.get("created", datetime.datetime.now().timestamp())),
+        role=result['choices'][0]['message'].get('role', 'assistant'),
+        message=result['choices'][0]['message'].get('content', '')
+        # usage =result.get("usage", {}),
+        # ai_configuration= config,
+        # input_messages=messages
+    )
+    return log_entry
 
 
 class RequestsWrapper(WrapperBase):
@@ -21,12 +46,8 @@ class RequestsWrapper(WrapperBase):
     """
 
     def __init__(self,
-                 base_url: str = 'https://openrouter.ai/api/v1',
-                 model: str = 'x-ai/grok-4.1-fast',
-                 temperature: float = 0.7,
-                 top_p: float = 1.0,
-                 stream: bool = False,
-                 system_prompt: str = "You are a helpful assistant."):
+                 config: AIConfigurationModel,
+                 base_url: str = 'https://openrouter.ai/api/v1'):
         """
         Initialize the Requests wrapper with OpenRouter.
 
@@ -36,12 +57,12 @@ class RequestsWrapper(WrapperBase):
             temperature: Temperature for generation (0.0 to 1.0)
             system_prompt: Default system prompt
         """
-        self._model = model
-        self._temperature = temperature
         self._base_url = base_url
-        self._system_prompt = system_prompt
-        self._top_p = top_p
-        self._stream = stream
+        self._config = config
+        self._logger = LoggerFactory.create(
+            config.logger_type,
+            config.logger_params
+        )
 
         # Get OpenRouter API key from environment
         self._api_key = os.getenv('OPENROUTER_API_KEY')
@@ -65,10 +86,10 @@ class RequestsWrapper(WrapperBase):
 
         # Prepare request payload
         payload = {
-            "model": self._model,
+            "model": self._config.model,
             "messages": messages,
-            "temperature": self._temperature,
-            "top_p": self._top_p,
+            "temperature": self._config.temperature,
+            "top_p": self._config.top_p,
             "stream": False 
         }
         # add optional keys 
@@ -92,8 +113,10 @@ class RequestsWrapper(WrapperBase):
 
         response.raise_for_status()
         result = response.json()
-        # TODO this is where logging would go
-        print(result)
+
+        # Log the complete response
+        log_data = build_log_entry(result, self._config, messages)        
+        await self._logger.log(log_data)
 
         return result
 
@@ -116,10 +139,10 @@ class RequestsWrapper(WrapperBase):
 
         # Prepare request payload
         payload = {
-            "model": self._model,
+            "model": self._config.model,
             "messages": messages,
-            "temperature": self._temperature,
-            "top_p": self._top_p,
+            "temperature": self._config.temperature,
+            "top_p": self._config.top_p,
             "stream": True
         }
 
@@ -165,7 +188,11 @@ class RequestsWrapper(WrapperBase):
                             # Remove delta from choices since we have the full message
                             if 'delta' in complete_data['choices'][0]:
                                 del complete_data['choices'][0]['delta']
-                            print(complete_data)
+
+                            # Log the data 
+                            log_data = build_log_entry(complete_data, self._config, messages)
+                            await self._logger.log(log_data)
+                            
                         # Yield the [DONE] message to client
                         yield line_str + '\n\n'
                         break
@@ -193,29 +220,10 @@ class RequestsWrapper(WrapperBase):
 
 
     @property
-    def model(self):
-        """Get the current model identifier."""
-        return self._model
+    def config(self) -> AIConfigurationModel:
+        """Get the current configuration."""
+        return self._config
 
-    @property
-    def temperature(self):
-        """Get the current temperature setting."""
-        return self._temperature
-
-    @property
-    def top_p(self):
-        """Get the current top_p setting."""
-        return self._top_p
-
-    @property
-    def base_url(self):
-        """Get the current base URL."""
-        return self._base_url
-
-    @property
-    def system_prompt(self):
-        """Get the current system prompt."""
-        return self._system_prompt
 
     def _replace_system_prompt(self, messages: List[Dict]) -> List[Dict]:
         """
@@ -232,46 +240,10 @@ class RequestsWrapper(WrapperBase):
 
         for i, msg in enumerate(messages):
             if msg.get('role') == 'system':
-                messages[i] = {**msg, 'content': self._system_prompt}
+                messages[i] = {**msg, 'content': self._config.system_prompt}
                 return messages
 
         # If no system message found, insert at the beginning
-        messages.insert(0, {"role": "system", "content": self._system_prompt})
+        messages.insert(0, {"role": "system", "content": self._config.system_prompt})
         return messages
 
-
-async def main():
-    # Check if API key is available
-    if not os.getenv('OPENROUTER_API_KEY'):
-        print("OPENROUTER_API_KEY not set. Skipping live API test.")
-        print("RequestsWrapper class loaded successfully!")
-        print("\nTo test with real API calls, set the OPENROUTER_API_KEY environment variable.")
-        return
-
-    # Example usage with OpenRouter and Grok
-    provider = RequestsWrapper(
-        model='x-ai/grok-4.1-fast',
-        temperature=0.0,
-        top_p=1.0,
-        base_url='https://openrouter.ai/api/v1',
-        system_prompt="You are a helpful assistant.")
-
-    messages = [
-        {"role": "system", "content": "You are a helpful pirate assistant."},
-        {"role": "user", "content": "What is the capital of France and list 10 things to do there?"}
-    ]
-
-    # Non-streaming example
-    print("Non-streaming response:")
-    response = await provider.generate_text(messages)
-    print("Response:", response)
-
-    # Streaming example
-    print("\n\nStreaming response:")
-    async for chunk in provider.generate_stream(messages):
-        print(chunk, end='', flush=True)
-    print()
-
-
-if __name__ == '__main__':
-    asyncio.run(main())

@@ -1,6 +1,6 @@
-from loguru import logger
+
 from .loggerbase import LoggerBase
-from models.logging_model import LoggingModel
+from app.models.logging_model import LoggingModel
 
 from pymongo.asynchronous.mongo_client import AsyncMongoClient
 
